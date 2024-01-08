@@ -59,7 +59,9 @@ def main():
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
 
-    model = ERFNet(NUM_CLASSES)
+    ### FOR VOID CLASSIFIER WE ALSO USE ENET AND BISENET 
+    if args.loadModel == 'erfnet.py':
+        model = ERFNet(NUM_CLASSES)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
