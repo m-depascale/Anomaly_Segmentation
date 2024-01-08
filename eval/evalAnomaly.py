@@ -11,6 +11,7 @@ import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
+import torch.nn.functional as F
 
 seed = 42
 
@@ -42,6 +43,8 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--method', type=str, default='MSP')
+    parser.add_argument('--temp', type=float, default=0.)
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -84,7 +87,18 @@ def main():
         images = images.permute(0,3,1,2)
         with torch.no_grad():
             result = model(images)
-        anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
+        if args.method == 'MSP':
+            anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
+        elif args.method == 'MSPT':
+            #MSP with temp scaling
+            temp = args.temp if args.temp>0 else 1
+            anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0)/temp, dim=0).data.cpu().numpy(), axis=0)                        
+        elif args.method == 'MaxLogit':
+            anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)
+        elif args.method == 'MaxEntropy':
+            anomaly_result = torch.div(torch.sum(-F.softmax(result.squeeze(0), dim=0) * F.log_softmax(result.squeeze(0), dim=0), dim=0),
+                                       torch.log(torch.tensor(result.squeeze(0).size(0)))).data.cpu().numpy()
+            
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
            pathGT = pathGT.replace("webp", "png")
@@ -123,7 +137,7 @@ def main():
 
     ood_mask = (ood_gts == 1)
     ind_mask = (ood_gts == 0)
-
+    
     ood_out = anomaly_scores[ood_mask]
     ind_out = anomaly_scores[ind_mask]
 
@@ -138,8 +152,11 @@ def main():
 
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
+    if args.temp == 0.:
+        file.write(f'METHOD: {args.method} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
+    else: 
+        file.write(f'METHOD: {args.method} TEMP {args.temp} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
 
-    file.write(('    AUPRC score:' + str(prc_auc*100.0) + '   FPR@TPR95:' + str(fpr*100.0) ))
     file.close()
 
 if __name__ == '__main__':
