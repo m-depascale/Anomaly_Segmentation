@@ -6,6 +6,7 @@ import torch
 import random
 from PIL import Image
 import numpy as np
+from enet import ENet
 from erfnet import ERFNet
 import os.path as osp
 from argparse import ArgumentParser
@@ -62,6 +63,8 @@ def main():
     ### FOR VOID CLASSIFIER WE ALSO USE ENET AND BISENET 
     if args.loadModel == 'erfnet.py':
         model = ERFNet(NUM_CLASSES)
+    elif args.loadModel == 'enet.py':
+        model = ENet(NUM_CLASSES)    
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
