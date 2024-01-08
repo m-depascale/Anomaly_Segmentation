@@ -1,3 +1,6 @@
+# Author: David Silva https://github.com/davidtvs/PyTorch-ENet/
+
+
 import os
 
 import torch
@@ -46,6 +49,7 @@ def load_dataset(dataset):
         args.dataset_dir,
         transform=image_transform,
         label_transform=label_transform)
+    
     train_loader = data.DataLoader(
         train_set,
         batch_size=args.batch_size,
@@ -94,9 +98,9 @@ def load_dataset(dataset):
 
     # Get a batch of samples to display
     if args.mode.lower() == 'test':
-        images, labels = iter(test_loader).next()
+        images, labels = next(iter(test_loader))
     else:
-        images, labels = iter(train_loader).next()
+        images, labels = next(iter(train_loader))
     print("Image size:", images.size())
     print("Label size:", labels.size())
     print("Class-color encoding:", class_encoding)
@@ -248,7 +252,7 @@ def test(model, test_loader, class_weights, class_encoding):
     # Show a batch of samples and labels
     if args.imshow_batch:
         print("A batch of predictions from the test set...")
-        images, _ = iter(test_loader).next()
+        images, _ = next(iter(test_loader))
         predict(model, images, class_encoding)
 
 
