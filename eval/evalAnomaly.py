@@ -103,7 +103,7 @@ def main():
             anomaly_result =  1 - np.max(F.normalize(result.squeeze(0), dim=0).data.cpu().numpy(), axis=0)
         elif args.method == 'MaxEntropy':
             anomaly_result = torch.div(torch.sum(-F.softmax(result.squeeze(0), dim=0) * F.log_softmax(result.squeeze(0), dim=0), dim=0),
-                                       torch.log(torch.tensor(result.squeeze(0).size(0)))).data.cpu().numpy()
+                                       torch.log(torch.tensor(F.softmax(result.squeeze(0), dim=0).size(0)))).data.cpu().numpy()
             
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
