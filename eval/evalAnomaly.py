@@ -99,7 +99,7 @@ def main():
             temp = args.temp if args.temp>0 else 1
             anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0)/temp, dim=0).data.cpu().numpy(), axis=0)                        
         elif args.method == 'MaxLogit':
-            anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)
+            anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)
         elif args.method == 'MaxEntropy':
             anomaly_result = torch.div(torch.sum(-F.softmax(result.squeeze(0), dim=0) * F.log_softmax(result.squeeze(0), dim=0), dim=0),
                                        torch.log(torch.tensor(result.squeeze(0).size(0)))).data.cpu().numpy()
