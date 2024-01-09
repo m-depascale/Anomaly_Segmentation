@@ -97,6 +97,7 @@ def main():
         elif args.method == 'MSPT':
             #MSP with temp scaling
             temp = args.temp if args.temp>0 else 1
+            print('temp: ', temp)
             anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0)/temp, dim=0).data.cpu().numpy(), axis=0)                        
         elif args.method == 'MaxLogit':
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)
