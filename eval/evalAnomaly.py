@@ -93,14 +93,14 @@ def main():
         with torch.no_grad():
             result = model(images)
         if args.method == 'MSP':
-            anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
+            anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0), dim=0).data.cpu().numpy(), axis=0)            
         elif args.method == 'MSPT':
             #MSP with temp scaling
             temp = args.temp if args.temp>0 else 1
             print('temp: ', temp)
-            anomaly_result = 1.0 - np.max((result.squeeze(0)/temp).data.cpu().numpy(), axis=0)                        
+            anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0)/temp, dim=0).data.cpu().numpy(), axis=0)                        
         elif args.method == 'MaxLogit':
-            anomaly_result = - np.max(F.softmax(result.squeeze(0)).data.cpu().numpy(), axis=0)
+            anomaly_result =  1 - np.max(F.normalize(result.squeeze(0), dim=0).data.cpu().numpy(), axis=0)
         elif args.method == 'MaxEntropy':
             anomaly_result = torch.div(torch.sum(-F.softmax(result.squeeze(0), dim=0) * F.log_softmax(result.squeeze(0), dim=0), dim=0),
                                        torch.log(torch.tensor(result.squeeze(0).size(0)))).data.cpu().numpy()
