@@ -159,9 +159,9 @@ def main():
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
     if args.temp == 0.:
-        file.write(f'METHOD: {args.method} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
+        file.write(f'METHOD: {args.method} DATASET: {args.input} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
     else: 
-        file.write(f'METHOD: {args.method} TEMP {args.temp} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
+        file.write(f'METHOD: {args.method} TEMP {args.temp} DATASET: {args.input} -- AUPRC score: {prc_auc*100.0}, FPR@TPR95: {fpr*100.0}') 
 
     file.close()
 
