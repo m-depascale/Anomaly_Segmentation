@@ -119,8 +119,12 @@ def main(args):
         with torch.no_grad():
           if args.loadModel == 'bisenetv1.py':
             outputs, *_ = model(inputs)
-          else:
+          elif args.loadModel == 'enet.py':
             outputs = model(inputs)
+            outputs = torch.roll(outputs, -1, 1)
+            print('outputs: ', outputs)
+          else:
+            outpus = model(inputs)
             
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
