@@ -19,6 +19,7 @@ from torchvision.transforms import Compose, CenterCrop, Normalize, Resize
 from torchvision.transforms import ToTensor, ToPILImage
 
 from dataset import cityscapes
+from enet import ENet
 from erfnet import ERFNet
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
@@ -45,7 +46,11 @@ def main(args):
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
 
-    model = ERFNet(NUM_CLASSES)
+     ### FOR VOID CLASSIFIER WE ALSO USE ENET AND BISENET 
+    if args.loadModel == 'erfnet.py':
+        model = ERFNet(NUM_CLASSES)
+    elif args.loadModel == 'enet.py':
+        model = ENet(NUM_CLASSES)    
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
@@ -73,10 +78,10 @@ def main(args):
         new_dict = {}
         for key, value in state_dict.items():
             new_dict['module.'+key] = value
-            model.load_state_dict(new_dict)
+        model.load_state_dict(new_dict)
 
     print('Model: ', model)
-    
+
     print ("Model and weights LOADED successfully")
 
 
