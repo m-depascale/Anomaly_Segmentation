@@ -64,7 +64,19 @@ def main(args):
                 own_state[name].copy_(param)
         return model
 
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    if args.loadModel == 'erfnet.py':
+        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    else:
+        print('path w', weightspath)
+        state_dict = torch.load(weightspath)['state_dict']
+        # Remove 'module.' prefix from keys if present
+        new_dict = {}
+        for key, value in state_dict.items():
+            new_dict['module.'+key] = value
+            model.load_state_dict(new_dict)
+
+    print('Model: ', model)
+    
     print ("Model and weights LOADED successfully")
 
 
