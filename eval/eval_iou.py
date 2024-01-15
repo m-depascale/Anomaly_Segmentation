@@ -21,6 +21,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 from dataset import cityscapes
 from enet import ENet
 from erfnet import ERFNet
+from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
 
@@ -50,7 +51,9 @@ def main(args):
     if args.loadModel == 'erfnet.py':
         model = ERFNet(NUM_CLASSES)
     elif args.loadModel == 'enet.py':
-        model = ENet(NUM_CLASSES)    
+        model = ENet(NUM_CLASSES)
+    else: # args.loadModel == 'bisenetv1.py' 
+        model = BiSeNetV1(NUM_CLASSES)
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
@@ -71,7 +74,7 @@ def main(args):
 
     if args.loadModel == 'erfnet.py':
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
-    else:
+    elif args.loadModel == 'enet.py':
         print('path w', weightspath)
         state_dict = torch.load(weightspath)['state_dict']
         # Remove 'module.' prefix from keys if present
@@ -79,7 +82,16 @@ def main(args):
         for key, value in state_dict.items():
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
-
+    else:
+        print('path w', weightspath)
+        state_dict = torch.load(weightspath)  
+        #new_dict = {}
+        #for key, value in state_dict.items():
+            #new_dict['module.'+key] = value
+        new_dict = {k[7:]: v for k, v in state_dict.items()} if 'module.' in list(state_dict.keys())[0] else state_dict
+        model = load_my_state_dict(model, new_dict)
+        #model.load_state_dict(new_dict)
+      
     print('Model: ', model)
 
     print ("Model and weights LOADED successfully")
@@ -105,7 +117,11 @@ def main(args):
 
         inputs = Variable(images)
         with torch.no_grad():
+          if args.loadModel == 'bisenetv1.py':
+            outputs, *_ = model(inputs)
+          else:
             outputs = model(inputs)
+            
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
 
