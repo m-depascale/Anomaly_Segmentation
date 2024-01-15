@@ -85,12 +85,9 @@ def main(args):
     else:
         print('path w', weightspath)
         state_dict = torch.load(weightspath)  
-        #new_dict = {}
-        #for key, value in state_dict.items():
-            #new_dict['module.'+key] = value
         new_dict = {k[7:]: v for k, v in state_dict.items()} if 'module.' in list(state_dict.keys())[0] else state_dict
         model = load_my_state_dict(model, new_dict)
-        #model.load_state_dict(new_dict)
+        
       
     print('Model: ', model)
 
@@ -122,9 +119,10 @@ def main(args):
           elif args.loadModel == 'enet.py':
             outputs = model(inputs)
             outputs = torch.roll(outputs, -1, 1)
+            # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
             print('outputs: ', outputs)
           else:
-            outpus = model(inputs)
+            outputs = model(inputs)
             
 
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
