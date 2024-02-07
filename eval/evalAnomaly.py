@@ -8,6 +8,7 @@ from PIL import Image
 import numpy as np
 from enet import ENet
 from erfnet import ERFNet
+from bisenetv1 import BiSeNetV1
 import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
@@ -64,7 +65,9 @@ def main():
     if args.loadModel == 'erfnet.py':
         model = ERFNet(NUM_CLASSES)
     elif args.loadModel == 'enet.py':
-        model = ENet(NUM_CLASSES)    
+        model = ENet(NUM_CLASSES)
+    elif args.loadModel == 'bisenetv1.py':
+        model = BiSeNetV1(NUM_CLASSES)    
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -92,8 +95,14 @@ def main():
       for key, value in state_dict.items():
         new_dict['module.'+key] = value
       model.load_state_dict(new_dict)
-    else: #bisenetv1.py
-        print('path w', weightspath)
+    elif args.loadModel == 'bisenetv1.py': #bisenetv1.py
+      state_dict = torch.load(weightspath)
+      new_dict = {}
+      for key, value in state_dict.items():
+        new_dict['module.'+key] = value
+      model.load_state_dict(new_dict)
+      model = load_my_state_dict(model, state_dict)
+        #print(state_dict)
       
     print('model: ', model)
     print ("Model and weights LOADED successfully")
