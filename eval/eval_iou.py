@@ -75,7 +75,6 @@ def main(args):
     if args.loadModel == 'erfnet.py':
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     elif args.loadModel == 'enet.py':
-        print('path w', weightspath)
         state_dict = torch.load(weightspath)['state_dict']
         # Remove 'module.' prefix from keys if present
         new_dict = {}
@@ -83,10 +82,12 @@ def main(args):
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
     else:
-        print('path w', weightspath)
-        state_dict = torch.load(weightspath)  
-        new_dict = {k[7:]: v for k, v in state_dict.items()} if 'module.' in list(state_dict.keys())[0] else state_dict
-        model = load_my_state_dict(model, new_dict)
+        state_dict = torch.load(weightspath)
+        # Remove 'module.' prefix from keys if present
+        new_dict = {}
+        for key, value in state_dict.items():
+            new_dict['module.'+key] = value
+        model.load_state_dict(new_dict)
         
       
     print('Model: ', model)
