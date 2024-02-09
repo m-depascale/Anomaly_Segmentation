@@ -14,6 +14,8 @@ from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 import torch.nn.functional as F
+from torchvision.transforms import Resize
+
 
 seed = 42
 
@@ -67,7 +69,7 @@ def main():
     elif args.loadModel == 'enet.py':
         model = ENet(NUM_CLASSES)
     elif args.loadModel == 'bisenetv1.py':
-        model = BiSeNetV1(NUM_CLASSES)    
+        model = BiSeNetV1(NUM_CLASSES, aux_mode='eval')    
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -87,6 +89,7 @@ def main():
 
     if args.loadModel == 'erfnet.py':
       model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    
     elif args.loadModel == 'enet.py':
       print('path w', weightspath)
       state_dict = torch.load(weightspath)['state_dict']
@@ -95,25 +98,42 @@ def main():
       for key, value in state_dict.items():
         new_dict['module.'+key] = value
       model.load_state_dict(new_dict)
+
     elif args.loadModel == 'bisenetv1.py': #bisenetv1.py
       state_dict = torch.load(weightspath)
+        # Remove 'module.' prefix from keys if present
       new_dict = {}
+      print("--- SAVED PRETRAINED PARAMS ---- ")
       for key, value in state_dict.items():
-        new_dict['module.'+key] = value
+        #print(key)
+        if key.split('.')[0] not in ['conv_out16', 'conv_out32']:
+          new_dict['module.'+key] = value
+        #print('module.'+key)
       model.load_state_dict(new_dict)
-      model = load_my_state_dict(model, state_dict)
-        #print(state_dict)
+
       
-    print('model: ', model)
+    #print('model: ', model)
     print ("Model and weights LOADED successfully")
     model.eval()
     
     for path in glob.glob(os.path.expanduser(str(args.input[0]))):
-        print(path)
+        #print(path)
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = images.permute(0,3,1,2)
+        #print(args.loadModel)
+        if args.loadModel == 'bisenetv1.py':
+            images = Resize((1024,2048), Image.BILINEAR)(images)
         with torch.no_grad():
+          if args.loadModel == 'bisenetv1.py':
+            #print(images.shape)
+            result = model(images)[0]
+            #print(result.shape)
+          else:
             result = model(images)
+        
+        if args.method == 'VOID':    
+          anomaly_result = F.softmax(result.squeeze(0), dim=0).data.cpu().numpy()[-1]
+
         if args.method == 'MSP':
             anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0), dim=0).data.cpu().numpy(), axis=0)            
         elif args.method == 'MSPT':
@@ -136,6 +156,8 @@ def main():
            pathGT = pathGT.replace("jpg", "png")  
 
         mask = Image.open(pathGT)
+        if args.loadModel == 'bisenetv1.py':
+            mask = Resize((1024, 2048), Image.NEAREST)(mask)
         ood_gts = np.array(mask)
 
         if "RoadAnomaly" in pathGT:
@@ -162,19 +184,24 @@ def main():
 
     ood_gts = np.array(ood_gts_list)
     anomaly_scores = np.array(anomaly_score_list)
+    #print(len(ood_gts), len(anomaly_scores))
 
     ood_mask = (ood_gts == 1)
     ind_mask = (ood_gts == 0)
-    
+    #print(len(ood_mask), len(ind_mask))
+
     ood_out = anomaly_scores[ood_mask]
     ind_out = anomaly_scores[ind_mask]
+    #print(len(ood_out), len(ind_out))
 
     ood_label = np.ones(len(ood_out))
     ind_label = np.zeros(len(ind_out))
     
+    #print(len(ood_label), len(ind_label))
     val_out = np.concatenate((ind_out, ood_out))
     val_label = np.concatenate((ind_label, ood_label))
 
+    #print(len(val_out), len(val_label))
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
 
