@@ -93,7 +93,6 @@ def main():
     elif args.loadModel == 'enet.py':
       print('path w', weightspath)
       state_dict = torch.load(weightspath)['state_dict']
-      # Remove 'module.' prefix from keys if present
       new_dict = {}
       for key, value in state_dict.items():
         new_dict['module.'+key] = value
@@ -101,7 +100,6 @@ def main():
 
     elif args.loadModel == 'bisenetv1.py': #bisenetv1.py
       state_dict = torch.load(weightspath)
-        # Remove 'module.' prefix from keys if present
       new_dict = {}
       print("--- SAVED PRETRAINED PARAMS ---- ")
       for key, value in state_dict.items():

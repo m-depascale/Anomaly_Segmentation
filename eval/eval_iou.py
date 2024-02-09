@@ -81,7 +81,7 @@ def main(args):
         for key, value in state_dict.items():
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
-    else:
+    elif args.loadModel == 'bisenetv1.py':
         state_dict = torch.load(weightspath)
         # Remove 'module.' prefix from keys if present
         new_dict = {}
