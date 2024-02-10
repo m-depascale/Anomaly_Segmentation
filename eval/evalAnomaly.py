@@ -98,19 +98,16 @@ def main():
         new_dict['module.'+key] = value
       model.load_state_dict(new_dict)
 
-    elif args.loadModel == 'bisenetv1.py': #bisenetv1.py
+    elif args.loadModel == 'bisenetv1.py': 
       state_dict = torch.load(weightspath)
       new_dict = {}
       print("--- SAVED PRETRAINED PARAMS ---- ")
       for key, value in state_dict.items():
-        #print(key)
         if key.split('.')[0] not in ['conv_out16', 'conv_out32']:
           new_dict['module.'+key] = value
-        #print('module.'+key)
       model.load_state_dict(new_dict)
 
-      
-    #print('model: ', model)
+  
     print ("Model and weights LOADED successfully")
     model.eval()
     

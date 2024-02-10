@@ -74,32 +74,28 @@ def main(args):
 
     if args.loadModel == 'erfnet.py':
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+
     elif args.loadModel == 'enet.py':
         state_dict = torch.load(weightspath)['state_dict']
-        # Remove 'module.' prefix from keys if present
         new_dict = {}
         for key, value in state_dict.items():
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
+
     elif args.loadModel == 'bisenetv1.py':
         state_dict = torch.load(weightspath)
-        # Remove 'module.' prefix from keys if present
         new_dict = {}
         for key, value in state_dict.items():
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
         
       
-    print('Model: ', model)
-
     print ("Model and weights LOADED successfully")
-
 
     model.eval()
 
     if(not os.path.exists(args.datadir)):
         print ("Error: datadir could not be loaded")
-
 
     loader = DataLoader(cityscapes(args.datadir, input_transform_cityscapes, target_transform_cityscapes, subset=args.subset), num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
 
@@ -121,12 +117,30 @@ def main(args):
             outputs = model(inputs)
             outputs = torch.roll(outputs, -1, 1)
             # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
-            print('outputs: ', outputs)
-          else:
-            outputs = model(inputs)
+          else:  # in the case of Erfnet we want to see (table2) how the different anomaly segmentation metrics can affect the mIoU
             
-
-        iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+            if args.method == 'MPS':
+                print('---Computing mIoU on MSP results---')
+                predicted_output = 1.0 - np.max(F.softmax(outputs.squeeze(0), dim=0).data.cpu().numpy(), axis=0)            
+                iouEvalVal.addBatch(predicted_output, labels)
+            
+            elif args.method == 'MaxLogit':
+                print('---Computing mIoU on MaxLogit results---')
+                predicted_output =  1 - np.max(F.normalize(outputs.squeeze(0), dim=0).data.cpu().numpy(), axis=0)
+                iouEvalVal.addBatch(predicted_output, labels)
+            
+            elif args.method == 'MaxEntropy':
+                print('---Computing mIoU on MaxEntropy results---')
+                predicted_output = torch.div(torch.sum(-F.softmax(outputs.squeeze(0), dim=0) * F.log_softmax(outputs.squeeze(0), dim=0), dim=0),
+                                       torch.log(torch.tensor(F.softmax(outputs.squeeze(0), dim=0).size(0)))).data.cpu().numpy()
+                iouEvalVal.addBatch(predicted_output, labels)
+            
+            else:
+                print('---Computing default mIoU---')
+                outputs = model(inputs)
+                iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+                # outputs.max(1) returns the maximum over the first dimension. It returns 2 tensors (values and indexes) we are interested in the indexes
+            
 
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
@@ -176,6 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('--loadDir',default="../trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
+    parser.add_argument('--method', default="")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
