@@ -160,11 +160,11 @@ def main():
 
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts)
-        if "LostAndFound" in pathGT:
-            ood_gts = np.where((ood_gts==0), 255, ood_gts)
-            ood_gts = np.where((ood_gts==1), 0, ood_gts)
-            ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
 
+        if "FS_LostFound_full" or "RoadObsticle21" in pathGT:
+            ood_gts = np.where((ood_gts<255), 0, ood_gts)
+            ood_gts = np.where((ood_gts==255), 1, ood_gts)
+            
         if "Streethazard" in pathGT:
             ood_gts = np.where((ood_gts==14), 255, ood_gts)
             ood_gts = np.where((ood_gts<20), 0, ood_gts)
@@ -182,24 +182,24 @@ def main():
 
     ood_gts = np.array(ood_gts_list)
     anomaly_scores = np.array(anomaly_score_list)
-    #print(len(ood_gts), len(anomaly_scores))
+    print(len(ood_gts), len(anomaly_scores))
 
     ood_mask = (ood_gts == 1)
     ind_mask = (ood_gts == 0)
-    #print(len(ood_mask), len(ind_mask))
+    print(len(ood_mask), len(ind_mask))
 
     ood_out = anomaly_scores[ood_mask]
     ind_out = anomaly_scores[ind_mask]
-    #print(len(ood_out), len(ind_out))
+    print(len(ood_out), len(ind_out))
 
     ood_label = np.ones(len(ood_out))
     ind_label = np.zeros(len(ind_out))
     
-    #print(len(ood_label), len(ind_label))
+    print(len(ood_label), len(ind_label))
     val_out = np.concatenate((ind_out, ood_out))
     val_label = np.concatenate((ind_label, ood_label))
 
-    #print(len(val_out), len(val_label))
+    print(len(val_out), len(val_label))
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
 
