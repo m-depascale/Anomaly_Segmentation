@@ -118,27 +118,26 @@ def main(args):
             outputs = torch.roll(outputs, -1, 1)
             # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
           else:  # in the case of Erfnet we want to see (table2) how the different anomaly segmentation metrics can affect the mIoU
-           
+            
             outputs = model(inputs)
             if args.method == 'MPS':
                 print('---Computing mIoU on MSP results---')
-                predicted_output = 1.0 - np.max(F.softmax(outputs.squeeze(0), dim=0).data.cpu().numpy(), axis=0)            
-                iouEvalVal.addBatch(predicted_output, labels)
+                output_softmax =  F.softmax(outputs, dim=1)
+                iouEvalVal.addBatch(output_softmax.max(1)[1].unsqueeze(1).data, labels)
             
             elif args.method == 'MaxLogit':
                 print('---Computing mIoU on MaxLogit results---')
-                predicted_output =  1 - np.max(F.normalize(outputs.squeeze(0), dim=0).data.cpu().numpy(), axis=0)
-                iouEvalVal.addBatch(predicted_output, labels)
+                outputs_max_logit = torch.argmax(outputs, dim=1)
+                iouEvalVal.addBatch(outputs_max_logit.unsqueeze(1).data, labels)
             
             elif args.method == 'MaxEntropy':
                 print('---Computing mIoU on MaxEntropy results---')
-                predicted_output = torch.div(torch.sum(-F.softmax(outputs.squeeze(0), dim=0) * F.log_softmax(outputs.squeeze(0), dim=0), dim=0),
-                                       torch.log(torch.tensor(F.softmax(outputs.squeeze(0), dim=0).size(0)))).data.cpu().numpy()
-                iouEvalVal.addBatch(predicted_output, labels)
-            
+                outputs_softmax = F.softmax(outputs, dim=1)
+                entropy = -torch.sum(outputs_softmax * torch.log(outputs_softmax + 1e-10), dim=1)  # Avoiding log(0)
+                outputs_max_entropy = torch.argmax(entropy, dim=1)
+                iouEvalVal.addBatch(outputs_max_entropy.unsqueeze(1).data, labels)
             else:
-                print('---Computing default mIoU---')
-                outputs = model(inputs)
+                print('---Computing default mIoU---')   
                 iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
                 # outputs.max(1) returns the maximum over the first dimension. It returns 2 tensors (values and indexes) we are interested in the indexes
             
