@@ -112,18 +112,17 @@ def main():
     model.eval()
     
     for path in glob.glob(os.path.expanduser(str(args.input[0]))):
-        #print(path)
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = images.permute(0,3,1,2)
-        #print(args.loadModel)
         if args.loadModel == 'bisenetv1.py':
             images = Resize((1024,2048), Image.BILINEAR)(images)
         with torch.no_grad():
           if args.loadModel == 'bisenetv1.py':
-            #print(images.shape)
             result = model(images)[0]
-            #print(result.shape)
-          else:
+          elif args.loadModel == 'enet.py':
+            result = model(images)
+            result = torch.roll(result, -1, 1)
+          else: # ErfNet 
             result = model(images)
         
         if args.method == 'VOID':    

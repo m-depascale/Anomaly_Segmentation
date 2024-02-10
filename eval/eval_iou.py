@@ -118,7 +118,8 @@ def main(args):
             outputs = torch.roll(outputs, -1, 1)
             # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
           else:  # in the case of Erfnet we want to see (table2) how the different anomaly segmentation metrics can affect the mIoU
-            
+           
+            outputs = model(inputs)
             if args.method == 'MPS':
                 print('---Computing mIoU on MSP results---')
                 predicted_output = 1.0 - np.max(F.softmax(outputs.squeeze(0), dim=0).data.cpu().numpy(), axis=0)            
