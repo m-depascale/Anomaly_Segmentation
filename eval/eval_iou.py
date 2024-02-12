@@ -24,6 +24,7 @@ from erfnet import ERFNet
 from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
+from bisenetv1_pruned_conv_avg import BiSeNetV1_pruned
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
@@ -52,8 +53,10 @@ def main(args):
         model = ERFNet(NUM_CLASSES)
     elif args.loadModel == 'enet.py':
         model = ENet(NUM_CLASSES)
-    else: # args.loadModel == 'bisenetv1.py' 
+    elif args.loadModel == 'bisenetv1.py':
         model = BiSeNetV1(NUM_CLASSES)
+    else: # pruned bisenet
+        model = BiSeNetV1_pruned(NUM_CLASSES)
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
@@ -82,7 +85,7 @@ def main(args):
             new_dict['module.'+key] = value
         model.load_state_dict(new_dict)
 
-    elif args.loadModel == 'bisenetv1.py':
+    elif args.loadModel.startswith('bisenetv1'):
         state_dict = torch.load(weightspath)
         new_dict = {}
         for key, value in state_dict.items():

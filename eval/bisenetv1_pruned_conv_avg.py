@@ -262,10 +262,10 @@ class FeatureFusionModule(nn.Module):
         return wd_params, nowd_params
 
 
-class BiSeNetV1(nn.Module):
+class BiSeNetV1_pruned(nn.Module):
 
     def __init__(self, n_classes, aux_mode='train', *args, **kwargs):
-        super(BiSeNetV1, self).__init__()
+        super(BiSeNetV1_pruned, self).__init__()
         self.cp = ContextPath()
         self.sp = SpatialPath()
         self.ffm = FeatureFusionModule(256, 256)
@@ -315,7 +315,7 @@ class BiSeNetV1(nn.Module):
 
 
 if __name__ == "__main__":
-    net = BiSeNetV1(19)
+    net = BiSeNetV1_pruned(19)
     net.cuda()
     net.eval()
     in_ten = torch.randn(16, 3, 640, 480).cuda()
