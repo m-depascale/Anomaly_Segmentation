@@ -138,10 +138,10 @@ def main(args):
                 iouEvalVal.addBatch(outputs_max_entropy.unsqueeze(1).data, labels)
             else:
                 print('---Computing default mIoU---')   
-                iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+                
                 # outputs.max(1) returns the maximum over the first dimension. It returns 2 tensors (values and indexes) we are interested in the indexes
             
-
+        iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
         print (step, filenameSave)
