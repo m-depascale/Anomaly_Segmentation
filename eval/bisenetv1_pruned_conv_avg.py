@@ -268,7 +268,7 @@ class BiSeNetV1_pruned(nn.Module):
         super(BiSeNetV1_pruned, self).__init__()
         self.cp = ContextPath()
         self.sp = SpatialPath()
-        self.ffm = FeatureFusionModule(205, 256)
+        self.ffm = FeatureFusionModule(256, 205)
         self.conv_out = BiSeNetOutput(256, 256, n_classes, up_factor=8)
         self.aux_mode = aux_mode
         if self.aux_mode == 'train':
