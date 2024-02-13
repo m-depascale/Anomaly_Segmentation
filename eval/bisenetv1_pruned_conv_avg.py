@@ -127,7 +127,7 @@ class ContextPath(nn.Module):
         self.arm32 = AttentionRefinementModule(512, 128)
         self.conv_head32 = ConvBNReLU(128, 128, ks=3, stride=1, padding=1)
         self.conv_head16 = ConvBNReLU(128, 128, ks=3, stride=1, padding=1)
-        self.conv_avg = ConvBNReLU(410, 128, ks=1, stride=1, padding=0)
+        self.conv_avg = ConvBNReLU(512, 128, ks=1, stride=1, padding=0)
         self.up32 = nn.Upsample(scale_factor=2.)
         self.up16 = nn.Upsample(scale_factor=2.)
 
