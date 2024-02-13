@@ -24,7 +24,7 @@ from erfnet import ERFNet
 from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
-from AnomalySegmentation_AML.eval.bisenetv1_pruned import BiSeNetV1_pruned
+from bisenetv1_pruned import BiSeNetV1_pruned
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
