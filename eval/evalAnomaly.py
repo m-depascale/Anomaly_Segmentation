@@ -49,6 +49,7 @@ def main():
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method', type=str, default='MSP')
     parser.add_argument('--temp', type=float, default=0.)
+    parser.add_argument('--height', type=int, default=512)    
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -115,7 +116,7 @@ def main():
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = images.permute(0,3,1,2)
         if args.loadModel == 'bisenetv1.py':
-            images = Resize((1024,2048), Image.BILINEAR)(images)
+            images = Resize((args.height, args.height*2), Image.BILINEAR)(images)
         with torch.no_grad():
           if args.loadModel == 'bisenetv1.py':
             result = model(images)[0]
@@ -151,13 +152,17 @@ def main():
 
         mask = Image.open(pathGT)
         if args.loadModel == 'bisenetv1.py':
-            mask = Resize((1024, 2048), Image.NEAREST)(mask)
+            mask = Resize((args.height, args.height*2), Image.NEAREST)(mask)
         ood_gts = np.array(mask)
 
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts)
 
-        if "FS_LostFound_full" or "RoadObsticle21" in pathGT:
+        if "FS_LostFound_full" in pathGT:
+            ood_gts = np.where((ood_gts<255), 0, ood_gts)
+            ood_gts = np.where((ood_gts==255), 1, ood_gts)
+
+        if "RoadObsticle21" in pathGT:
             ood_gts = np.where((ood_gts<255), 0, ood_gts)
             ood_gts = np.where((ood_gts==255), 1, ood_gts)
             
