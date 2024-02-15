@@ -121,8 +121,9 @@ def main(args):
             outputs = torch.roll(outputs, -1, 1)
             # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
           else:  # in the case of Erfnet we want to see (table2) how the different anomaly segmentation metrics can affect the mIoU
-            
+
             outputs = model(inputs)
+            '''
             if args.method == 'MPS':
                 print('---Computing mIoU on MSP results---')
                 output_softmax =  F.softmax(outputs, dim=1)
@@ -143,7 +144,8 @@ def main(args):
                 print('---Computing default mIoU---')   
                 
                 # outputs.max(1) returns the maximum over the first dimension. It returns 2 tensors (values and indexes) we are interested in the indexes
-            
+            '''
+
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
@@ -193,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--loadDir',default="../trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
-    parser.add_argument('--method', default="")
+    #parser.add_argument('--method', default="")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
