@@ -172,9 +172,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-
     parser.add_argument('--state')
-
     parser.add_argument('--loadDir',default="../trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
