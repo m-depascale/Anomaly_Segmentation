@@ -89,7 +89,11 @@ def main():
         return model
 
     if args.loadModel == 'erfnet.py':
-      model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+        if args.loadWeights == 'erfnet_pretrained.pth':
+            model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+        else:
+           state_dict = torch.load(weightspath)
+           model.load_state_dict(state_dict)
     
     elif args.loadModel == 'enet.py':
       print('path w', weightspath)
