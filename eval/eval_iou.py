@@ -24,7 +24,7 @@ from erfnet import ERFNet
 from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
-from bisenetv1_pruned import BiSeNetV1_pruned
+
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
@@ -79,8 +79,11 @@ def main(args):
         if args.loadWeights == 'erfnet_pretrained.pth':
             model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
         else:
-           state_dict = torch.load(weightspath)
-           model.load_state_dict(state_dict)
+            state_dict = torch.load(weightspath)
+            new_dict = {}
+            for key, value in state_dict.items():
+                new_dict['module.'+key] = value
+            model.load_state_dict(new_dict)
     
     elif args.loadModel == 'enet.py':
         state_dict = torch.load(weightspath)['state_dict']
@@ -199,7 +202,6 @@ if __name__ == '__main__':
     parser.add_argument('--loadDir',default="../trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
-    #parser.add_argument('--method', default="")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
