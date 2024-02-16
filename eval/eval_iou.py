@@ -24,7 +24,7 @@ from erfnet import ERFNet
 from bisenetv1 import BiSeNetV1
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
-from bisenetv1_pruned import BiSeNetV1_pruned
+
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
@@ -79,8 +79,11 @@ def main(args):
         if args.loadWeights == 'erfnet_pretrained.pth':
             model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
         else:
-           state_dict = torch.load(weightspath)
-           model.load_state_dict(state_dict)
+            state_dict = torch.load(weightspath)
+            new_dict = {}
+            for key, value in state_dict.items():
+                new_dict['module.'+key] = value
+            model.load_state_dict(new_dict)
     
     elif args.loadModel == 'enet.py':
         state_dict = torch.load(weightspath)['state_dict']
@@ -125,36 +128,12 @@ def main(args):
             outputs = torch.roll(outputs, -1, 1)
             # we did the torch.roll cuz of the order in the dictionary here:  https://github.com/davidtvs/PyTorch-ENet/blob/e17d404e2f649a3476eabe39f8a05e5eb77c55fd/data/cityscapes.py#L2
           else:  # in the case of Erfnet we want to see (table2) how the different anomaly segmentation metrics can affect the mIoU
-
             outputs = model(inputs)
-            '''
-            if args.method == 'MPS':
-                print('---Computing mIoU on MSP results---')
-                output_softmax =  F.softmax(outputs, dim=1)
-                iouEvalVal.addBatch(output_softmax.max(1)[1].unsqueeze(1).data, labels)
-            
-            elif args.method == 'MaxLogit':
-                print('---Computing mIoU on MaxLogit results---')
-                outputs_max_logit = torch.argmax(outputs, dim=1)
-                iouEvalVal.addBatch(outputs_max_logit.unsqueeze(1).data, labels)
-            
-            elif args.method == 'MaxEntropy':
-                print('---Computing mIoU on MaxEntropy results---')
-                outputs_softmax = F.softmax(outputs, dim=1)
-                entropy = -torch.sum(outputs_softmax * torch.log(outputs_softmax + 1e-10), dim=1)  # Avoiding log(0)
-                outputs_max_entropy = torch.argmax(entropy, dim=1)
-                iouEvalVal.addBatch(outputs_max_entropy.unsqueeze(1).data, labels)
-            else:
-                print('---Computing default mIoU---')   
-                
-                # outputs.max(1) returns the maximum over the first dimension. It returns 2 tensors (values and indexes) we are interested in the indexes
-            '''
-
+          
         iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
         print (step, filenameSave)
-
 
     iouVal, iou_classes = iouEvalVal.getIoU()
 
@@ -193,13 +172,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-
     parser.add_argument('--state')
-
     parser.add_argument('--loadDir',default="../trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
-    #parser.add_argument('--method', default="")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)

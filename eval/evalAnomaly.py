@@ -92,8 +92,11 @@ def main():
         if args.loadWeights == 'erfnet_pretrained.pth':
             model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
         else:
-           state_dict = torch.load(weightspath)
-           model.load_state_dict(state_dict)
+            state_dict = torch.load(weightspath)
+            new_dict = {}
+            for key, value in state_dict.items():
+                new_dict['module.'+key] = value
+            model.load_state_dict(new_dict)
     
     elif args.loadModel == 'enet.py':
       print('path w', weightspath)
@@ -161,15 +164,11 @@ def main():
 
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts)
-
         if "FS_LostFound_full" in pathGT:
-            ood_gts = np.where((ood_gts<255), 0, ood_gts)
-            ood_gts = np.where((ood_gts==255), 1, ood_gts)
+            ood_gts = np.where((ood_gts==0), 255, ood_gts)
+            ood_gts = np.where((ood_gts==1), 0, ood_gts)
+            ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
 
-        if "RoadObsticle21" in pathGT:
-            ood_gts = np.where((ood_gts<255), 0, ood_gts)
-            ood_gts = np.where((ood_gts==255), 1, ood_gts)
-            
         if "Streethazard" in pathGT:
             ood_gts = np.where((ood_gts==14), 255, ood_gts)
             ood_gts = np.where((ood_gts<20), 0, ood_gts)
