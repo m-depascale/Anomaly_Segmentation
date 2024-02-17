@@ -109,7 +109,6 @@ def main():
     elif args.loadModel == 'bisenetv1.py': 
       state_dict = torch.load(weightspath)
       new_dict = {}
-      print("--- SAVED PRETRAINED PARAMS ---- ")
       for key, value in state_dict.items():
         if key.split('.')[0] not in ['conv_out16', 'conv_out32']:
           new_dict['module.'+key] = value
@@ -126,7 +125,7 @@ def main():
             images = Resize((args.height, args.height*2), Image.BILINEAR)(images)
         with torch.no_grad():
           if args.loadModel == 'bisenetv1.py':
-            result = model(images)[0]
+            result = model(images)[0]  # This [0] is useless with aux_mode = 'eval'
           elif args.loadModel == 'enet.py':
             result = model(images)
             result = torch.roll(result, -1, 1)
@@ -141,7 +140,6 @@ def main():
         elif args.method == 'MSPT':
             #MSP with temp scaling
             temp = args.temp if args.temp>0 else 1
-            print('temp: ', temp)
             anomaly_result = 1.0 - np.max(F.softmax(result.squeeze(0)/temp, dim=0).data.cpu().numpy(), axis=0)                        
         elif args.method == 'MaxLogit':
             anomaly_result =  1 - np.max(F.normalize(result.squeeze(0), dim=0).data.cpu().numpy(), axis=0)
@@ -164,7 +162,8 @@ def main():
 
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts)
-        if "FS_LostFound_full" in pathGT:
+            
+        if "LostAndFound" in pathGT:
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
             ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
@@ -194,16 +193,16 @@ def main():
 
     ood_out = anomaly_scores[ood_mask]
     ind_out = anomaly_scores[ind_mask]
-    print(len(ood_out), len(ind_out))
+    #print(len(ood_out), len(ind_out))
 
     ood_label = np.ones(len(ood_out))
     ind_label = np.zeros(len(ind_out))
     
-    print(len(ood_label), len(ind_label))
+    #print(len(ood_label), len(ind_label))
     val_out = np.concatenate((ind_out, ood_out))
     val_label = np.concatenate((ind_label, ood_label))
 
-    print(len(val_out), len(val_label))
+    #print(len(val_out), len(val_label))
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
 
