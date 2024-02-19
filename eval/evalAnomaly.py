@@ -117,6 +117,15 @@ def main():
           new_dict['module.'+key] = value
       model.load_state_dict(new_dict)
 
+    elif args.loadModel == 'channel_based_erfnet_pruned.py':
+      state_dict = torch.load(weightspath)
+      new_dict = {}
+      for key, value in state_dict.items():
+          new_dict['module.'+key] = value
+      model.load_state_dict(new_dict)
+
+
+
   
     print ("Model and weights LOADED successfully")
     model.eval()
