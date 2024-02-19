@@ -9,6 +9,7 @@ import numpy as np
 from enet import ENet
 from erfnet import ERFNet
 from bisenetv1 import BiSeNetV1
+from channel_based_erfnet_pruned.py import ERFNET_PRUNEDV2
 import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
@@ -70,7 +71,9 @@ def main():
     elif args.loadModel == 'enet.py':
         model = ENet(NUM_CLASSES)
     elif args.loadModel == 'bisenetv1.py':
-        model = BiSeNetV1(NUM_CLASSES, aux_mode='eval')    
+        model = BiSeNetV1(NUM_CLASSES, aux_mode='eval') 
+    else:
+        model = ERFNET_PRUNEDV2(NUM_CLASSES) 
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()

@@ -55,8 +55,6 @@ def main(args):
         model = ENet(NUM_CLASSES)
     elif args.loadModel == 'bisenetv1.py':
         model = BiSeNetV1(NUM_CLASSES)
-    else: # pruned bisenet
-        model = BiSeNetV1_pruned(NUM_CLASSES)
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
